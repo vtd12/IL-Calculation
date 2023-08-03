@@ -38,3 +38,4 @@ def get_contract_eth(address):
 
     contract = web3_ETH.eth.contract(Web3.to_checksum_address(address), abi=abi)
     return contract
+

@@ -1,4 +1,5 @@
 import math
+import pandas as pd
 from statistics import mean
 from config import *
 from network_utils import *
@@ -115,7 +116,7 @@ def get_info(SY_contract, YT_contract, market_contract, timestamp, chain = 'arb'
 
 def IL(data_df, case, PENDLE_incentive, asset_price, X_price, PENDLE_price=PENDLE):
     n = len(data_df)
-    IL = [[0 for _ in range(n)] for _ in range(n)]
+    IL = [[pd.NA for _ in range(n)] for _ in range(n)]
 
     # Implementing https://www.notion.so/pendle/IL-2-047e0ede69e94de28caa2c6bde13dc60?pvs=4
     # Compare from timestamp i to timestamp j
@@ -160,3 +161,14 @@ def IL(data_df, case, PENDLE_incentive, asset_price, X_price, PENDLE_price=PENDL
             IL[i][j] = in_pool_value/out_pool_value
 
     return IL
+
+def write_array_to_csv(array, file_name, timestamp_start):
+    date_column = [date.fromtimestamp(timestamp_start) + datetime.timedelta(days=DAY_DELTA*i) for i in range(len(array))]
+    for i in range(len(array)):
+        array[i].insert(0, date_column[i])
+
+    date_row = [''] + date_column
+    array.insert(0, date_row)
+
+    df = pd.DataFrame(array)
+    df.to_csv(file_name, header=False, index=False)
