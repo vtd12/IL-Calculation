@@ -162,6 +162,29 @@ def IL(data_df, case, PENDLE_incentive, asset_price, X_price, PENDLE_price=PENDL
 
     return IL
 
+def in_pool_value(data_df, asset_price, X_price, PENDLE_incentive=True, PENDLE_price=PENDLE):
+    n = len(data_df)
+    in_pool_value = [[pd.NA for _ in range(n)] for _ in range(n)]
+
+    for i in range(n):  
+        for j in range(i, n):             
+            BOOST_FACTOR = data_df.loc[j, "average_boost_factor"]
+            PENDLE_reward_value = (data_df.loc[j, "PENDLE_reward_index"] - data_df.loc[i, "PENDLE_reward_index"])*BOOST_FACTOR*PENDLE_price/asset_price
+            X_reward = (data_df.loc[j, "X_reward_index"] - data_df.loc[i, "X_reward_index"])*X_price/asset_price
+            # asset per SY
+                
+            # At timestamp j
+            PT_in_pool = data_df.loc[j, "PT"]/data_df.loc[j, "LP"]  # x_j
+            PT_in_pool_value = PT_in_pool/data_df.loc[j, "exchange_rate"]  # value unit is asset
+            mean_SY_in_pool = mean(data_df.loc[i:j, "SY"]/data_df.loc[i:j, "LP"])  # y_{i,j}
+            SY_in_pool_value = data_df.loc[j, "asset"]/data_df.loc[j, "LP"]  # y_j*SYindex_j
+            X_reward_in_pool_value = mean_SY_in_pool*X_reward*BOOST_FACTOR  # Assume reward received based on the final amount of SY only
+
+            in_pool_value[i][j] = PT_in_pool_value + SY_in_pool_value + X_reward_in_pool_value + (PENDLE_reward_value if PENDLE_incentive else 0)
+        in_pool_value[i] = [value/in_pool_value[i][i] for value in in_pool_value[i]]
+        print(in_pool_value[i])
+    return in_pool_value
+
 def write_array_to_csv(array, file_name, timestamp_start):
     date_column = [date.fromtimestamp(timestamp_start) + datetime.timedelta(days=DAY_DELTA*i) for i in range(len(array))]
     for i in range(len(array)):
