@@ -162,7 +162,7 @@ def IL(data_df, case, PENDLE_incentive, asset_price, X_price, PENDLE_price=PENDL
 
     return IL
 
-def in_pool_value(data_df, asset_price, X_price, PENDLE_incentive=True, PENDLE_price=PENDLE):
+def in_pool_value(data_df, asset_price, X_price, PENDLE_incentive=True, with_YT = False, PENDLE_price=PENDLE):
     n = len(data_df)
     in_pool_value = [[pd.NA for _ in range(n)] for _ in range(n)]
 
@@ -181,6 +181,14 @@ def in_pool_value(data_df, asset_price, X_price, PENDLE_incentive=True, PENDLE_p
             X_reward_in_pool_value = mean_SY_in_pool*X_reward*BOOST_FACTOR  # Assume reward received based on the final amount of SY only
 
             in_pool_value[i][j] = PT_in_pool_value + SY_in_pool_value + X_reward_in_pool_value + (PENDLE_reward_value if PENDLE_incentive else 0)
+
+            if with_YT:
+                YT_holding = data_df.loc[i, "PT"]/data_df.loc[i, "LP"]  # x_i
+                YT_value = YT_holding*(1-1/data_df.loc[j, "exchange_rate"])
+                YT_reward_X = YT_holding/data_df.loc[j, "SY_index"] 
+                YT_reward_SY = YT_holding*(1/data_df.loc[i, "SY_index"]-1/data_df.loc[j, "SY_index"])
+                in_pool_value[i][j] = in_pool_value[i][j] + YT_value + YT_reward_X*X_reward + YT_reward_SY*data_df.loc[j, "SY_index"]
+        
         in_pool_value[i] = [value/in_pool_value[i][i] for value in in_pool_value[i]]
         print(in_pool_value[i])
     return in_pool_value
